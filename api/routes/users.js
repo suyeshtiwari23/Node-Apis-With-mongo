@@ -6,12 +6,8 @@ const bcrypt = require('bcrypt')
 
 router.post('/signup', (req, res, next) => {
     Users.find({email: req.body.email}).then((users) => {
-        console.log(users)
         if(users.length >= 1){
-            res.status(200).json({
-                message: req.body.email + 'Email Exists'
-            })
-            next()
+            res.error.Conflict('Email already exist', req.body.email)
         } else {
             bcrypt.hash(req.body.password, 10, (err, hash) =>{
             if(err){
@@ -35,7 +31,6 @@ router.post('/signup', (req, res, next) => {
         })
         }
     })
-    
 })
 
 router.get('/', (req, res) =>{

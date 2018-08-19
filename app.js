@@ -1,11 +1,11 @@
 const express = require('express')
 const app = express()
-const productRouter = require('./api/routes//products')
 const userRouter = require('./api/routes/users')
 const morgan = require('morgan')
 const bodyparser = require('body-parser')
 const mongoose = require('mongoose')
-
+const responseHandler = require('express-response-handler')
+const responseCodes = require('./api/utils/response')
 app.use(morgan('dev'))
 mongoose.connect(
     'mongodb://suyesh:'+
@@ -13,22 +13,17 @@ mongoose.connect(
 '@mongodb-shard-00-00-1wi7v.mongodb.net:27017,mongodb-shard-00-01-1wi7v.mongodb.net:27017,mongodb-shard-00-02-1wi7v.mongodb.net:27017/test?ssl=true&replicaSet=mongodb-shard-0&authSource=admin&retryWrites=true',
 {useNewUrlParser: true}
 );
+app.use(responseHandler(responseCodes))
 app.use(bodyparser.urlencoded({extended: false}))
 app.use(bodyparser.json())
 
-app.use((req, res, next)=>{
+app.use((req, res, next)=>{ 
     res.header("Access-Control-Allow-Origin", "*")
     res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, PUT")
     next()
 })
+
 app.use('/users', userRouter)
-app.use('/products', productRouter)
-
-app.use((req, res) => {
-   mongoose.disconnect()
-})
-
-
 
 app.use((req, res, next) => {
     const error = new Error('page not found');
@@ -37,10 +32,8 @@ app.use((req, res, next) => {
 })
 
 app.use((error, req, res, next) => {
-    res.status(error.status || 500)
-    res.json({
-        message: error.message
-    });
+    res.header('content-type', 'application/json')
+    res.error.Unauthorized('permission.error.unauthorized', 'sdf');
 })
 
 module.exports = app
