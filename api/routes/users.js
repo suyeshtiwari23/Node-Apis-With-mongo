@@ -4,15 +4,16 @@ const Users = require('../models/users')
 const LoginSchema = require('../models/login')
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
-const uservaildation = require('../validations/users')
+const joiSchema = require('../validations/users')
+const Joi = require('joi')
 
 router.post('/signup', (req, res, next) => {
     Users.find({email: req.body.email}).then((users) => {
-				const validations = uservaildation(req.body)
-				console.log(validations)
-				if(!validations.valid){
-					res.error.BadRequest(validations.error)
-				}
+				const validations = Joi.validate(req.body, joiSchema.UserJoi, (err, value) =>{
+					if(err){
+						res.error.BadRequest('Validation Error')
+					}
+				})
         if(users.length >= 1){
             res.error.Conflict('Email already exist', req.body.email)
         } else {
@@ -59,10 +60,16 @@ router.get('/', (req, res) =>{
 
 router.delete('/:deleteuser', (req, res) =>{
     const userId = req.param.deleteuser
-    Users.remove(userId).then((users) => {
-        res.status(200).json({
-                users: users
-        })
-    })
+		console.log(userId)
+		Users.findOne({_id: userId}).then((user) =>{
+			if(!user) {
+				Users.deleteOne(userId).then((users) => {
+					res.success.OK('User Deleted Sucessfully', {status: 'success'})
+				})
+			}
+		}).catch((e) => {
+			console.log(e)
+		})
+    
 })
 module.exports = router
